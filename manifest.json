@@ -5,5 +5,7 @@
   "minAppVersion": "1.4.0",
   "description": "A git-graph-style view of your PARA vault: Areas are trunks, projects are feature branches, resources are commits — see how work ladders up to your life-areas.",
   "author": "Devin Krizwold",
-  "isDesktopOnly": false
+  "authorUrl": "https://github.com/Sparky-code",
+  "fundingUrl": "https://www.buymeacoffee.com/sparkycode",
+  "isDesktopOnly": true
 }

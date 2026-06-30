@@ -21,8 +21,8 @@ It's read-only and live: edit a note's frontmatter and the graph updates.
 - **Packed ↔ Spread** lane toggle; **collapse/expand** subtrees (`▸N`); the **active area "breathes"** to a full spread while the rest stay compact.
 - **Focus** on a node or area (click again to deselect); **search** jumps to any node.
 - **Attention indicator** — set a `cadence:` and overdue projects get a small amber dot next to their last-edited time.
-- Resizable panes; right-angle filleted connectors; desktop-first (mobile stacks).
-- Note: this was designed for Desktop first - feedback on parity between Desktop and mobile appreciated.
+- Resizable panes; right-angle filleted connectors.
+- **Desktop-only for now** — this wide, hover-driven view is built for the desktop app; mobile support is planned for a later release.
 
 ## Frontmatter it reads
 
@@ -48,7 +48,7 @@ Notes in `_templates`, `04 Archive`, and `06 Reviews` are excluded. "Last edited
 
 **Just getting started with Second Brains | PARA Note taking?** Setup a new Obsidian vault with this [template](https://github.com/Sparky-code/second-brain-starter-kit) that explains how this framework works and comes with PARA-Tree already installed.
 
-**Beta via [BRAT](https://github.com/TfTHacker/obsidian42-brat)** (recommended while in beta): install BRAT, then *Add beta plugin* → `<your-github-username>/para-tree`.
+**Beta via [BRAT](https://github.com/TfTHacker/obsidian42-brat)** (recommended while in beta): install BRAT, then *Add beta plugin* → `Sparky-code/para-tree`.
 
 **Manual:** copy `main.js`, `manifest.json`, and `styles.css` into `<vault>/.obsidian/plugins/para-tree/`, then enable **PARA-Tree** under Settings → Community plugins.
 
