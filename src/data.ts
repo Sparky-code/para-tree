@@ -42,8 +42,9 @@ export interface VaultNodes {
   areas: ProjectNode[];
 }
 
-const byCreated = (a: ProjectNode, b: ProjectNode) =>
-  (a.created ?? "").localeCompare(b.created ?? "");
+/** Order by created-date ascending, then title — stable so parents precede children. */
+export const byCreated = (a: ProjectNode, b: ProjectNode) =>
+  (a.created ?? "").localeCompare(b.created ?? "") || a.title.localeCompare(b.title);
 
 /** Build a ProjectNode from one file's frontmatter; `kind` selects which fields apply. */
 function baseNode(file: TFile, fm: FrontMatterCache, kind: ProjectNode["kind"]): ProjectNode {

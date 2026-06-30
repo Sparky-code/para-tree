@@ -1,4 +1,4 @@
-import { ProjectNode } from "./data";
+import { ProjectNode, byCreated } from "./data";
 
 // ---- Tunables ----
 export const ROW_H = 42;
@@ -177,11 +177,8 @@ export function layout(
     if (!list) { list = []; map.set(key, list); }
     list.push(r);
   }
-  const sortCreated = (arr: ProjectNode[]) => arr.sort(
-    (a, b) => (a.created ?? "").localeCompare(b.created ?? "") || a.title.localeCompare(b.title),
-  );
-  resByProject.forEach(sortCreated);
-  resByArea.forEach(sortCreated);
+  resByProject.forEach((list) => list.sort(byCreated));
+  resByArea.forEach((list) => list.sort(byCreated));
   const areaNodeByName = new Map(areaNodes.map((a) => [a.title, a]));
   const synthArea = (name: string): ProjectNode => ({
     title: name, path: "", area: name, status: "area", created: null,
@@ -189,8 +186,6 @@ export function layout(
     kind: "area", parentProject: null, lastEdited: null, cadence: null,
   });
 
-  const byCreated = (a: ProjectNode, b: ProjectNode) =>
-    (a.created ?? "").localeCompare(b.created ?? "") || a.title.localeCompare(b.title);
 
   // Group by area; include empty areas (from area notes) so dead trunks show.
   const areas = orderedAreas(visible, areaNodes);

@@ -21,7 +21,8 @@ export interface RenderOptions {
   activeArea?: string | null;           // RFC B: popped-out area
 }
 
-function svg<K extends keyof SVGElementTagNameMap>(
+/** Create an SVG element with string/number attributes, optionally appended to `parent`. */
+export function svg<K extends keyof SVGElementTagNameMap>(
   tag: K,
   attrs: Record<string, string | number> = {},
   parent?: Element,
@@ -95,13 +96,16 @@ export function renderLineage(
 
   let keepP: Set<string> | null = null;
   let keepA: Set<string> | null = null;
-  if (focus) {
-    const nb = neighborhood(projects.concat(resources), focus);
-    keepP = nb.keepProjects;
-    keepA = nb.keepAreas;
-  } else if (focusArea) {
-    keepP = new Set(projects.concat(resources).filter((p) => (p.area ?? "Unfiled") === focusArea).map((p) => p.title));
-    keepA = new Set([focusArea]);
+  if (focus || focusArea) {
+    const allNodes = projects.concat(resources);
+    if (focus) {
+      const nb = neighborhood(allNodes, focus);
+      keepP = nb.keepProjects;
+      keepA = nb.keepAreas;
+    } else if (focusArea) {
+      keepP = new Set(allNodes.filter((p) => (p.area ?? "Unfiled") === focusArea).map((p) => p.title));
+      keepA = new Set([focusArea]);
+    }
   }
   const nodeDim = (key: string) => (keepP ? !keepP.has(key) : false);
   const areaDim = (area: string) => (keepA ? !keepA.has(area) : false);

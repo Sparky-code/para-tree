@@ -1,30 +1,20 @@
 import { ItemView, Platform, WorkspaceLeaf } from "obsidian";
 import type ParaTreePlugin from "./main";
 import { collectNodes, ProjectNode, VaultNodes } from "./data";
-import { renderLineage } from "./render";
+import { renderLineage, svg } from "./render";
 import { buildAreaColors, orderedAreas, statusColor, relTime, isOverdue } from "./layout";
 
 export const VIEW_TYPE_LINEAGE = "para-tree";
 
 /** A small defined glyph: three vertical bars, tight (packed) or spaced (spread). */
 function laneGlyph(parent: HTMLElement, spread: boolean): void {
-  const ns = "http://www.w3.org/2000/svg";
-  const svg = activeDocument.createElementNS(ns, "svg");
-  svg.setAttribute("viewBox", "0 0 14 14");
-  svg.setAttribute("width", "14");
-  svg.setAttribute("height", "14");
+  const root = svg("svg", { viewBox: "0 0 14 14", width: 14, height: 14 }, parent);
   for (const x of spread ? [2.5, 7, 11.5] : [4.5, 7, 9.5]) {
-    const line = activeDocument.createElementNS(ns, "line");
-    line.setAttribute("x1", String(x));
-    line.setAttribute("y1", "2.5");
-    line.setAttribute("x2", String(x));
-    line.setAttribute("y2", "11.5");
-    line.setAttribute("stroke", "currentColor");
-    line.setAttribute("stroke-width", "1.7");
-    line.setAttribute("stroke-linecap", "round");
-    svg.appendChild(line);
+    svg("line", {
+      x1: x, y1: 2.5, x2: x, y2: 11.5,
+      stroke: "currentColor", "stroke-width": 1.7, "stroke-linecap": "round",
+    }, root);
   }
-  parent.appendChild(svg);
 }
 
 export class LineageView extends ItemView {
