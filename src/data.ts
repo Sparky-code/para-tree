@@ -47,28 +47,28 @@ export const byCreated = (a: ProjectNode, b: ProjectNode) =>
   (a.created ?? "").localeCompare(b.created ?? "") || a.title.localeCompare(b.title);
 
 /** Build a ProjectNode from one file's frontmatter; `kind` selects which fields apply. */
-function baseNode(file: TFile, fm: FrontMatterCache, kind: ProjectNode["kind"]): ProjectNode {
+function baseNode(file: TFile, frontmatter: FrontMatterCache, kind: ProjectNode["kind"]): ProjectNode {
   const isArea = kind === "area";
   return {
     title: file.basename,
     path: file.path,
-    area: isArea ? file.basename : unlink(fm.area),
-    status: isArea ? "area" : String(fm.status ?? "active"),
+    area: isArea ? file.basename : unlink(frontmatter.area),
+    status: isArea ? "area" : String(frontmatter.status ?? "active"),
     // Areas use only `created`; projects/resources fall back to `started`.
     created: isArea
-      ? (fm.created != null ? String(fm.created) : null)
-      : fm.created != null ? String(fm.created)
-      : fm.started != null ? String(fm.started)
+      ? (frontmatter.created != null ? String(frontmatter.created) : null)
+      : frontmatter.created != null ? String(frontmatter.created)
+      : frontmatter.started != null ? String(frontmatter.started)
       : null,
-    branchedFrom: kind === "project" ? unlink(fm["branched-from"]) : null,
-    contributesTo: isArea ? [] : unlinkList(fm["contributes-to"]),
-    promotedTo: kind === "project" ? unlink(fm["promoted-to"]) : null,
-    goal: fm.goal != null ? String(fm.goal) : null,
-    nextAction: fm["next-action"] != null ? String(fm["next-action"]) : null,
+    branchedFrom: kind === "project" ? unlink(frontmatter["branched-from"]) : null,
+    contributesTo: isArea ? [] : unlinkList(frontmatter["contributes-to"]),
+    promotedTo: kind === "project" ? unlink(frontmatter["promoted-to"]) : null,
+    goal: frontmatter.goal != null ? String(frontmatter.goal) : null,
+    nextAction: frontmatter["next-action"] != null ? String(frontmatter["next-action"]) : null,
     lastEdited: new Date(file.stat.mtime).toISOString(),
-    cadence: fm.cadence != null ? String(fm.cadence) : null,
+    cadence: frontmatter.cadence != null ? String(frontmatter.cadence) : null,
     kind,
-    parentProject: kind === "resource" ? unlink(fm.project) : null,
+    parentProject: kind === "resource" ? unlink(frontmatter.project) : null,
   };
 }
 
@@ -90,13 +90,13 @@ export function collectNodes(app: App): VaultNodes {
 
   for (const file of app.vault.getMarkdownFiles()) {
     if (SKIP_PREFIXES.some((p) => file.path.startsWith(p))) continue;
-    const fm = app.metadataCache.getFileCache(file)?.frontmatter;
-    if (!fm) continue;
+    const frontmatter = app.metadataCache.getFileCache(file)?.frontmatter;
+    if (!frontmatter) continue;
 
-    if (fm.type === "project") { projects.push(baseNode(file, fm, "project")); continue; }
-    if (fm.type === "area") areas.push(baseNode(file, fm, "area"));
-    if (fm.type === "resource" || unlink(fm.project) != null) {
-      resources.push(baseNode(file, fm, "resource"));
+    if (frontmatter.type === "project") { projects.push(baseNode(file, frontmatter, "project")); continue; }
+    if (frontmatter.type === "area") areas.push(baseNode(file, frontmatter, "area"));
+    if (frontmatter.type === "resource" || unlink(frontmatter.project) != null) {
+      resources.push(baseNode(file, frontmatter, "resource"));
     }
   }
 

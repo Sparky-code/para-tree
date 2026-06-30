@@ -94,25 +94,25 @@ export function renderLineage(
     return;
   }
 
-  let keepP: Set<string> | null = null;
-  let keepA: Set<string> | null = null;
+  let keptNodeTitles: Set<string> | null = null;
+  let keptAreaNames: Set<string> | null = null;
   if (focus || focusArea) {
     const allNodes = projects.concat(resources);
     if (focus) {
       const nb = neighborhood(allNodes, focus);
-      keepP = nb.keepProjects;
-      keepA = nb.keepAreas;
+      keptNodeTitles = nb.keepProjects;
+      keptAreaNames = nb.keepAreas;
     } else if (focusArea) {
-      keepP = new Set(allNodes.filter((p) => (p.area ?? "Unfiled") === focusArea).map((p) => p.title));
-      keepA = new Set([focusArea]);
+      keptNodeTitles = new Set(allNodes.filter((p) => (p.area ?? "Unfiled") === focusArea).map((p) => p.title));
+      keptAreaNames = new Set([focusArea]);
     }
   }
-  const nodeDim = (key: string) => (keepP ? !keepP.has(key) : false);
-  const areaDim = (area: string) => (keepA ? !keepA.has(area) : false);
+  const nodeDim = (key: string) => (keptNodeTitles ? !keptNodeTitles.has(key) : false);
+  const areaDim = (area: string) => (keptAreaNames ? !keptAreaNames.has(area) : false);
   const edgeDim = (ownerKey: string, otherKey?: string) =>
-    keepP ? !(keepP.has(ownerKey) || (otherKey != null && keepP.has(otherKey))) : false;
+    keptNodeTitles ? !(keptNodeTitles.has(ownerKey) || (otherKey != null && keptNodeTitles.has(otherKey))) : false;
 
-  const L: LayoutResult = layout(visible, resources, areaNodes, {
+  const layoutResult: LayoutResult = layout(visible, resources, areaNodes, {
     expanded: opts.expanded, laneMode: opts.laneMode,
     hiddenKinds: opts.hiddenKinds, areaColors: opts.areaColors,
     activeArea: opts.activeArea,
@@ -121,7 +121,7 @@ export function renderLineage(
   // the visible right edge; titles budget/ellipsize into the space that's left. (RFC A S5)
   const fillW = (container.clientWidth || 720) - 2;
   const AGE_W = 64; // reserved right gutter for the relative-time stamp (RFC A text fix)
-  const root = svg("svg", { class: "plm-svg", width: fillW, height: L.height }, container);
+  const root = svg("svg", { class: "plm-svg", width: fillW, height: layoutResult.height }, container);
 
   // Arrowhead marker for contributes-to edges.
   const defs = svg("defs", {}, root);
@@ -137,10 +137,10 @@ export function renderLineage(
   const hitG = svg("g", {}, root);
 
   // Column rule.
-  svg("line", { class: "plm-col-rule", x1: L.columnX - 10, y1: 8, x2: L.columnX - 10, y2: L.height - 8 }, root);
+  svg("line", { class: "plm-col-rule", x1: layoutResult.columnX - 10, y1: 8, x2: layoutResult.columnX - 10, y2: layoutResult.height - 8 }, root);
 
   // 1) Area spines + labels.
-  for (const s of L.spines) {
+  for (const s of layoutResult.spines) {
     const dim = areaDim(s.area);
     const line = svg("line", {
       x1: s.x, y1: s.yTop, x2: s.x, y2: s.yBottom,
@@ -160,11 +160,11 @@ export function renderLineage(
   }
 
   // 2) Edges.
-  for (const e of L.edges) {
+  for (const e of layoutResult.edges) {
     const dim = edgeDim(e.ownerKey, e.otherKey);
     const attrs: Record<string, string | number> = {
       d: e.kind === "contributes"
-        ? elbowHVH(e.x1, e.y1, e.x2, e.y2, L.columnX - 24) // right-angle detour to the gutter
+        ? elbowHVH(e.x1, e.y1, e.x2, e.y2, layoutResult.columnX - 24) // right-angle detour to the gutter
         : elbowVH(e.x1, e.y1, e.x2, e.y2),                 // right-angle fork/merge
       fill: "none",
       stroke: e.color,
@@ -177,7 +177,7 @@ export function renderLineage(
   }
 
   // 3) Nodes + leader lines + right-hand column.
-  for (const n of L.nodes) {
+  for (const n of layoutResult.nodes) {
     const isFocus = focus === n.key;
     const isArea = n.kind === "area";
     const isRes = n.kind === "resource";
@@ -196,7 +196,7 @@ export function renderLineage(
     hit.addEventListener("click", () => isArea ? handlers.onFocusArea(n.area) : handlers.onFocus(n.key));
 
     svg("line", {
-      class: "plm-leader", x1: n.x + DOT_R, y1: n.y, x2: L.columnX - 12, y2: n.y,
+      class: "plm-leader", x1: n.x + DOT_R, y1: n.y, x2: layoutResult.columnX - 12, y2: n.y,
       opacity: dim ? DIM : 0.5,
     }, root);
 
@@ -216,7 +216,7 @@ export function renderLineage(
 
     // Right-hand column: indent by depth; a chevron+count button for parents.
     const indent = Math.max(0, n.depth - 1) * 14;
-    const toggleX = L.columnX + indent;
+    const toggleX = layoutResult.columnX + indent;
     if (n.hasChildren) {
       const txt = n.expanded ? "▾" : `▸ ${n.childCount}`;
       const tw = txt.length * 6.2 + 9;
@@ -235,7 +235,7 @@ export function renderLineage(
       tg.addEventListener("click", toggle);
     }
 
-    const labelX = L.columnX + indent + 32; // fixed toggle slot keeps titles aligned
+    const labelX = layoutResult.columnX + indent + 32; // fixed toggle slot keeps titles aligned
     // Budget the title so title + pills never reach the reserved timestamp gutter.
     const typeText = isArea ? "area" : isRes ? "resource" : "project";
     const pillsW = (typeText.length * 6 + 18) + (isArea ? 0 : n.project.status.length * 6 + 18) + 10;
@@ -287,7 +287,7 @@ export function renderLineage(
 
   // Jump-to-node: scroll the focused node into view if it's off-screen.
   if (focus) {
-    const fn = L.nodes.find((n) => n.key === focus);
+    const fn = layoutResult.nodes.find((n) => n.key === focus);
     const h = container.clientHeight;
     if (fn && h && (fn.y < container.scrollTop + 24 || fn.y > container.scrollTop + h - 24)) {
       container.scrollTop = Math.max(0, fn.y - h / 2);

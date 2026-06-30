@@ -25,7 +25,9 @@ export class LineageView extends ItemView {
   sidebarW = 210;   // desktop pane widths, draggable; persist across redraws
   inspectorW = 320;
   laneMode: "packed" | "spread" = "packed"; // graph lane spacing
-  hiddenKinds: Set<"area" | "project" | "resource"> = new Set(); // type filter
+  // TODO(future: type-filter chips) — populated by no UI yet (the chips were removed);
+  // stays threaded into layout so re-adding the filter needs no plumbing. See layout.ts.
+  hiddenKinds: Set<"area" | "project" | "resource"> = new Set();
   search = ""; // jump-to-node query (filters the sidebar into a matches list)
   private nodeCache: VaultNodes | null = null; // vault scan, reused until metadata changes
 
@@ -354,14 +356,14 @@ export class LineageView extends ItemView {
     meta.createDiv({ cls: "plm-insp-path", text: p.path });
 
     if (p.goal) {
-      const gs = host.createDiv({ cls: "plm-insp-sec" });
-      gs.createEl("h4", { text: "Goal" });
-      gs.createDiv({ cls: "plm-insp-goal", text: p.goal });
+      const goalSec = host.createDiv({ cls: "plm-insp-sec" });
+      goalSec.createEl("h4", { text: "Goal" });
+      goalSec.createDiv({ cls: "plm-insp-goal", text: p.goal });
     }
     if (p.nextAction) {
-      const ns = host.createDiv({ cls: "plm-insp-sec" });
-      ns.createEl("h4", { text: "Next action" });
-      ns.createDiv({ cls: "plm-insp-goal", text: p.nextAction });
+      const nextActionSec = host.createDiv({ cls: "plm-insp-sec" });
+      nextActionSec.createEl("h4", { text: "Next action" });
+      nextActionSec.createDiv({ cls: "plm-insp-goal", text: p.nextAction });
     }
 
     // Linked notes — the "diff": lineage in and out.

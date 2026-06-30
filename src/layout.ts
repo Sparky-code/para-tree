@@ -9,7 +9,6 @@ const LEFT_PAD = 84;      // room for the leftmost spine's centered label
 const PROJ_LANE_W = 24;   // horizontal step per lineage-depth level
 const AREA_PAD = 34;      // gap between area blocks
 const LEADER_GAP = 48;    // gap between the graph and the right-hand column
-const COL_W = 360;        // right-hand message column width
 const FORK_DY = ROW_H * 0.6;
 const LABEL_GAP = 8;          // min horizontal gap between adjacent spine header labels
 export const DOT_R = 6;
@@ -108,6 +107,9 @@ export function relTime(d?: string | null): string {
   return `${Math.round(days / 365)}y ago`;
 }
 
+// TODO(future: M3 dated time-axis) — TimeMode + the `mode` option below are
+// accepted but not yet read; they pair with a real time scale (proportional row
+// spacing by month/year). Kept threaded so M3 doesn't re-plumb the signature.
 export type TimeMode = "ordinal" | "month" | "year";
 
 export interface LayoutNode {
@@ -130,7 +132,7 @@ export interface LayoutSpine {
   yTop: number;
   yBottom: number;
   labelY: number;        // baseline of the first label line
-  labelLines: string[];  // word-wrapped area label (currently single-element; multi-line reserved for long names)
+  labelLines: string[];  // TODO(future: multi-line labels) — currently always single-element; reserved for word-wrapping long area names
   color: string;
 }
 
@@ -147,7 +149,6 @@ export interface LayoutResult {
   nodes: LayoutNode[];
   spines: LayoutSpine[];
   edges: LayoutEdge[];
-  width: number;
   height: number;
   columnX: number;
 }
@@ -167,6 +168,9 @@ export function layout(
   areaNodes: ProjectNode[],
   opts: {
     expanded?: Set<string>; mode?: TimeMode; laneMode?: "packed" | "spread";
+    // TODO(future: type-filter chips) — hiddenKinds is threaded all the way through
+    // (the `hidden.has(...)` guards below) but never populated; the filter UI was
+    // removed. Re-add the chips and this lights up with no layout changes.
     hiddenKinds?: Set<string>; areaColors?: Map<string, string>;
     activeArea?: string | null;
   } = {},
@@ -308,7 +312,6 @@ export function layout(
   const total = Math.max(1, ordered.length);
   const graphRight = x;
   const columnX = graphRight + LEADER_GAP;
-  const width = columnX + COL_W;
 
   // Assign each area label a tier so adjacent labels don't overlap; the header
   // grows downward as needed and the graph starts below it.
@@ -385,5 +388,5 @@ export function layout(
     }
   }
 
-  return { nodes, spines, edges, width, height, columnX };
+  return { nodes, spines, edges, height, columnX };
 }
