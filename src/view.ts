@@ -67,6 +67,11 @@ export class LineageView extends ItemView {
     const root = this.contentEl;
     root.empty();
     root.addClass("plm-container");
+    // TODO(mobile): mobile-support scaffolding. Currently dormant — manifest is
+    // `isDesktopOnly: true`, so Platform.isMobile is always false here. We still
+    // intend to ship mobile: when re-enabling, flip isDesktopOnly and revisit every
+    // `TODO(mobile)` (the `.plm-mobile` stacked layout, hidden resizers, and the
+    // hover/touch differences). Kept intentionally rather than deleted.
     root.toggleClass("plm-mobile", Platform.isMobile);
 
     const { projects, resources, areas: areaNodes } = this.collect();
@@ -79,7 +84,7 @@ export class LineageView extends ItemView {
     // Title — fully left, above the sidebar. The left segment is sized to the sidebar
     // so the main segment begins exactly at the graph column's left edge.
     const tbLeft = bar.createDiv({ cls: "plm-tb-left" });
-    if (!Platform.isMobile) tbLeft.style.width = `${this.sidebarW + 11}px`; // sidebar + resizer
+    if (!Platform.isMobile) tbLeft.style.width = `${this.sidebarW + 11}px`; // TODO(mobile): sidebar + resizer width; mobile stacks instead
     const titleEl = tbLeft.createSpan({ cls: "plm-title", text: this.app.vault.getName().slice(0, 20) });
     titleEl.setAttr("title", "Pick an area to highlight · click a node to focus · click a label to open");
 
@@ -109,13 +114,16 @@ export class LineageView extends ItemView {
     }
 
     // Create all three panes first so the graph measures its final width.
+    // TODO(mobile): the three side-by-side panes + draggable resizers are a
+    // desktop layout. On mobile we intend to stack the panes (no resizers) — the
+    // `.plm-mobile` CSS path. Resizers are omitted when Platform.isMobile.
     const main = root.createDiv({ cls: "plm-main" });
     const sideEl = main.createDiv({ cls: "plm-sidebar" });
     const resizeL = Platform.isMobile ? null : main.createDiv({ cls: "plm-resizer" });
     const graphEl = main.createDiv({ cls: "plm-graph" });
     const resizeR = Platform.isMobile ? null : main.createDiv({ cls: "plm-resizer" });
     const inspEl = main.createDiv({ cls: "plm-inspector" });
-    if (!Platform.isMobile) {
+    if (!Platform.isMobile) { // TODO(mobile): fixed pane widths are desktop-only; mobile uses full-width stacking
       sideEl.style.width = `${this.sidebarW}px`;
       inspEl.style.width = `${this.inspectorW}px`;
       this.attachResize(resizeL!, "sidebar");
@@ -225,6 +233,8 @@ export class LineageView extends ItemView {
   /**
    * @deprecated Area selection now lives in the sidebar. Kept (unrendered) for a
    * possible mobile layout where the sidebar collapses into a dropdown.
+   * TODO(mobile): wire this in (or delete) when the mobile layout lands — the
+   * `.plm-mobile` path hides the sidebar, so areas need this dropdown fallback.
    */
   private renderAreaDropdown(bar: HTMLElement, projects: ProjectNode[], areas: string[]) {
     const select = bar.createEl("select", { cls: "plm-filter dropdown" });

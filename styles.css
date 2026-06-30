@@ -71,6 +71,9 @@
 .plm-side-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .plm-side-meta { flex: 0 0 auto; font-size: 10px; color: var(--text-faint); }
 .plm-side-empty { padding: 2px 8px; font-size: 11px; color: var(--text-faint); }
+/* TODO(mobile): stacked mobile layout. Dormant while manifest is isDesktopOnly:true;
+   activated by the .plm-mobile class (set when Platform.isMobile). Revisit with the
+   matching TODO(mobile) markers in view.ts when re-enabling mobile support. */
 .plm-mobile .plm-sidebar { display: none; }
 .plm-graph {
   flex: 1;

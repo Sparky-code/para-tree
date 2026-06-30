@@ -1,3 +1,7 @@
 node_modules/
 main.js
 *.map
+
+# Obsidian temp files & local planning notes — not part of the plugin
+/notes
+
