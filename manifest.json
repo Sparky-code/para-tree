@@ -1,7 +1,7 @@
 {
   "id": "para-tree",
   "name": "PARA-Tree",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "minAppVersion": "1.7.2",
   "description": "A git-graph-style view of your PARA vault: Areas are trunks, projects are feature branches, resources are commits — see how work ladders up to your life-areas.",
   "author": "Devin Krizwold",

@@ -1,6 +1,6 @@
 {
   "name": "para-tree",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A git-graph-style view of a PARA vault for Obsidian.",
   "private": true,
   "license": "AGPL-3.0-or-later",
@@ -13,7 +13,7 @@
   },
   "devDependencies": {
     "@types/node": "^20.11.0",
-    "esbuild": "^0.21.5",
+    "esbuild": "^0.25.0",
     "eslint": "^9.39.4",
     "eslint-plugin-obsidianmd": "^0.3.0",
     "obsidian": "latest",
