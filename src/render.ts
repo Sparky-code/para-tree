@@ -1,5 +1,5 @@
 import { ProjectNode, neighborhood } from "./data";
-import { layout, LayoutResult, DOT_R, FOCUS_DOT_R, ROW_H, relTime, isOverdue } from "./layout";
+import { layout, LayoutResult, DOT_R, FOCUS_DOT_R, ROW_H, relTime, isOverdue, COLORS } from "./layout";
 
 const NS = "http://www.w3.org/2000/svg" as const;
 const DIM = 0.13; // opacity for elements outside the focused neighborhood
@@ -129,7 +129,7 @@ export function renderLineage(
     id: "plm-arrow", viewBox: "0 0 8 8", refX: 7, refY: 4,
     markerWidth: 6, markerHeight: 6, orient: "auto-start-reverse",
   }, defs);
-  svg("path", { d: "M0,0 L8,4 L0,8 z", fill: "#c678dd" }, marker);
+  svg("path", { d: "M0,0 L8,4 L0,8 z", fill: COLORS.contributes }, marker);
 
   // Row layers: highlight bands sit BEHIND the spines; transparent hit rects
   // (above edges, below the spines/nodes) capture full-row hover + click-to-focus.
@@ -277,7 +277,7 @@ export function renderLineage(
       if (!isArea && isOverdue(n.project.lastEdited, n.project.cadence)) {
         const tw = ageT.getComputedTextLength() || rel.length * 6;
         const cd = svg("circle", {
-          cx: fillW - 12 - tw - 7, cy: n.y, r: 3, fill: "#e8853b", opacity: dim ? DIM : 1,
+          cx: fillW - 12 - tw - 7, cy: n.y, r: 3, fill: COLORS.attention, opacity: dim ? DIM : 1,
         }, g);
         const tt = svg("title", {}, cd);
         tt.textContent = `Needs attention — past ${n.project.cadence} cadence`;

@@ -20,16 +20,27 @@ const AREA_COLORS = [
   "#e06c75", "#56b6c2", "#d19a66", "#61afef",
 ];
 
+/** Single source of truth for the plugin's semantic colors (status + edge kinds).
+ *  Shared by layout, render, and the sidebar legend so they can't drift. */
+export const COLORS = {
+  active: "#4f9cff",
+  inProgress: "#e5c07b",
+  done: "#98c379",      // also used for "merge" edges
+  idea: "#8a8f98",
+  contributes: "#c678dd",
+  attention: "#e8853b",
+} as const;
+
 export const DONE = new Set([
   "done", "complete", "completed", "archived", "shipped", "ready-to-publish",
 ]);
 
 export function statusColor(status: string): string {
   const s = status.toLowerCase();
-  if (DONE.has(s)) return "#98c379";
-  if (s === "idea") return "#8a8f98";
-  if (s === "in-progress") return "#e5c07b";
-  return "#4f9cff";
+  if (DONE.has(s)) return COLORS.done;
+  if (s === "idea") return COLORS.idea;
+  if (s === "in-progress") return COLORS.inProgress;
+  return COLORS.active;
 }
 
 /** Canonical area order: projects first-seen, then any empty area notes appended. */
@@ -358,7 +369,7 @@ export function layout(
     }
 
     if (p.kind === "project" && DONE.has(p.status.toLowerCase())) {
-      edges.push({ kind: "merge", x1: n.x, y1: n.y, x2: spineX.get(n.area)!, y2: n.y + FORK_DY, color: "#98c379", dashed: false, ownerKey: n.key });
+      edges.push({ kind: "merge", x1: n.x, y1: n.y, x2: spineX.get(n.area)!, y2: n.y + FORK_DY, color: COLORS.done, dashed: false, ownerKey: n.key });
     }
   }
 
@@ -367,9 +378,9 @@ export function layout(
       if (target === n.project.area) continue;
       const tn = nodeByTitle.get(target);
       if (tn) {
-        edges.push({ kind: "contributes", x1: n.x, y1: n.y, x2: tn.x, y2: tn.y, color: "#c678dd", dashed: true, ownerKey: n.key, otherKey: target });
+        edges.push({ kind: "contributes", x1: n.x, y1: n.y, x2: tn.x, y2: tn.y, color: COLORS.contributes, dashed: true, ownerKey: n.key, otherKey: target });
       } else if (spineX.has(target)) {
-        edges.push({ kind: "contributes", x1: n.x, y1: n.y, x2: spineX.get(target)!, y2: n.y, color: "#c678dd", dashed: true, ownerKey: n.key, otherKey: target });
+        edges.push({ kind: "contributes", x1: n.x, y1: n.y, x2: spineX.get(target)!, y2: n.y, color: COLORS.contributes, dashed: true, ownerKey: n.key, otherKey: target });
       }
     }
   }

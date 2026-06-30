@@ -2,7 +2,7 @@ import { ItemView, Platform, WorkspaceLeaf } from "obsidian";
 import type ParaTreePlugin from "./main";
 import { collectNodes, ProjectNode, VaultNodes } from "./data";
 import { renderLineage, svg } from "./render";
-import { buildAreaColors, orderedAreas, statusColor, relTime, isOverdue } from "./layout";
+import { buildAreaColors, orderedAreas, statusColor, relTime, isOverdue, COLORS } from "./layout";
 
 export const VIEW_TYPE_LINEAGE = "para-tree";
 
@@ -242,13 +242,13 @@ export class LineageView extends ItemView {
     const d = host.createEl("details", { cls: "plm-legend-drop" });
     d.createEl("summary", { text: "Legend" });
     const b = d.createDiv({ cls: "plm-legend-body" });
-    ([["#4f9cff", "active"], ["#e5c07b", "in-progress"], ["#98c379", "done"], ["#8a8f98", "idea"]] as const)
+    ([[COLORS.active, "active"], [COLORS.inProgress, "in-progress"], [COLORS.done, "done"], [COLORS.idea, "idea"]] as const)
       .forEach(([c, l]) => {
         const r = b.createDiv({ cls: "plm-legend-row" });
         r.createSpan({ cls: "plm-legend-dot" }).style.background = c;
         r.createSpan({ text: l });
       });
-    ([["branch", "#4f9cff", false], ["merge", "#98c379", false], ["contributes →", "#c678dd", true]] as const)
+    ([["branch", COLORS.active, false], ["merge", COLORS.done, false], ["contributes →", COLORS.contributes, true]] as const)
       .forEach(([l, c, dash]) => {
         const r = b.createDiv({ cls: "plm-legend-row" });
         r.createSpan({ cls: dash ? "plm-legend-line dash" : "plm-legend-line" }).style.borderTopColor = c;
@@ -396,6 +396,6 @@ export class LineageView extends ItemView {
     }
 
     const open = host.createEl("button", { cls: "plm-insp-open mod-cta", text: "Open note →" });
-    open.onclick = () => this.app.workspace.openLinkText(p.path, "", false);
+    open.onclick = () => { void this.app.workspace.openLinkText(p.path, "", false); };
   }
 }
