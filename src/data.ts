@@ -1,4 +1,4 @@
-import { App } from "obsidian";
+import type { App, TFile, FrontMatterCache } from "obsidian";
 
 export interface ProjectNode {
   title: string;
@@ -32,110 +32,76 @@ function unlinkList(value: unknown): string[] {
   return arr.map(unlink).filter((x): x is string => !!x);
 }
 
-/**
- * Collect every note with `type: project` in its frontmatter, sorted by
- * created date ascending so parent branches are emitted before their children.
- */
-/** Folders that may contain `type: project` notes that aren't real projects. */
+/** Folders that may contain typed notes that aren't real PARA nodes. */
 const SKIP_PREFIXES = ["_templates", "04 Archive", "06 Reviews"];
 
-export function collectProjects(app: App): ProjectNode[] {
-  const out: ProjectNode[] = [];
+/** The plugin-relevant nodes, bucketed by kind from a single vault pass. */
+export interface VaultNodes {
+  projects: ProjectNode[];
+  resources: ProjectNode[];
+  areas: ProjectNode[];
+}
 
-  for (const file of app.vault.getMarkdownFiles()) {
-    if (SKIP_PREFIXES.some((p) => file.path.startsWith(p))) continue;
-    const fm = app.metadataCache.getFileCache(file)?.frontmatter;
-    if (!fm || fm.type !== "project") continue;
+const byCreated = (a: ProjectNode, b: ProjectNode) =>
+  (a.created ?? "").localeCompare(b.created ?? "");
 
-    out.push({
-      title: file.basename,
-      path: file.path,
-      area: unlink(fm.area),
-      status: String(fm.status ?? "active"),
-      created: fm.created != null ? String(fm.created)
-             : fm.started != null ? String(fm.started)
-             : null,
-      branchedFrom: unlink(fm["branched-from"]),
-      contributesTo: unlinkList(fm["contributes-to"]),
-      promotedTo: unlink(fm["promoted-to"]),
-      goal: fm.goal != null ? String(fm.goal) : null,
-      nextAction: fm["next-action"] != null ? String(fm["next-action"]) : null,
-      lastEdited: new Date(file.stat.mtime).toISOString(),
-      cadence: fm.cadence != null ? String(fm.cadence) : null,
-      kind: "project",
-      parentProject: null,
-    });
-  }
-
-  out.sort((a, b) => (a.created ?? "").localeCompare(b.created ?? ""));
-  return out;
+/** Build a ProjectNode from one file's frontmatter; `kind` selects which fields apply. */
+function baseNode(file: TFile, fm: FrontMatterCache, kind: ProjectNode["kind"]): ProjectNode {
+  const isArea = kind === "area";
+  return {
+    title: file.basename,
+    path: file.path,
+    area: isArea ? file.basename : unlink(fm.area),
+    status: isArea ? "area" : String(fm.status ?? "active"),
+    // Areas use only `created`; projects/resources fall back to `started`.
+    created: isArea
+      ? (fm.created != null ? String(fm.created) : null)
+      : fm.created != null ? String(fm.created)
+      : fm.started != null ? String(fm.started)
+      : null,
+    branchedFrom: kind === "project" ? unlink(fm["branched-from"]) : null,
+    contributesTo: isArea ? [] : unlinkList(fm["contributes-to"]),
+    promotedTo: kind === "project" ? unlink(fm["promoted-to"]) : null,
+    goal: fm.goal != null ? String(fm.goal) : null,
+    nextAction: fm["next-action"] != null ? String(fm["next-action"]) : null,
+    lastEdited: new Date(file.stat.mtime).toISOString(),
+    cadence: fm.cadence != null ? String(fm.cadence) : null,
+    kind,
+    parentProject: kind === "resource" ? unlink(fm.project) : null,
+  };
 }
 
 /**
- * Collect "resource" nodes: any note that is `type: resource` OR carries a
- * `project:` link (so RFCs/spikes/notes filed under a project come along too).
- * Excludes `type: project` notes (collected separately) and the skip folders.
+ * Single vault pass that buckets every relevant note by kind. Replaces the three
+ * former full-scan collectors (collectProjects/Resources/Areas) so one `draw()`
+ * reads the vault once instead of three times.
+ *  - project:  `type: project`
+ *  - area:     `type: area` (incl. empty areas, so dead trunks still show)
+ *  - resource: any non-project note that is `type: resource` OR carries a
+ *              `project:` link (an `type: area` note with a `project:` link is,
+ *              as before, collected as both an area and a resource).
+ * Projects/resources are sorted by created-date ascending (parents before children).
  */
-export function collectResources(app: App): ProjectNode[] {
-  const out: ProjectNode[] = [];
+export function collectNodes(app: App): VaultNodes {
+  const projects: ProjectNode[] = [];
+  const resources: ProjectNode[] = [];
+  const areas: ProjectNode[] = [];
 
   for (const file of app.vault.getMarkdownFiles()) {
     if (SKIP_PREFIXES.some((p) => file.path.startsWith(p))) continue;
     const fm = app.metadataCache.getFileCache(file)?.frontmatter;
-    if (!fm || fm.type === "project") continue;
+    if (!fm) continue;
 
-    const parent = unlink(fm.project);
-    if (fm.type !== "resource" && parent == null) continue; // not a resource node
-
-    out.push({
-      title: file.basename,
-      path: file.path,
-      area: unlink(fm.area),
-      status: String(fm.status ?? "active"),
-      created: fm.created != null ? String(fm.created)
-             : fm.started != null ? String(fm.started)
-             : null,
-      branchedFrom: null,
-      contributesTo: unlinkList(fm["contributes-to"]),
-      promotedTo: null,
-      goal: fm.goal != null ? String(fm.goal) : null,
-      nextAction: fm["next-action"] != null ? String(fm["next-action"]) : null,
-      lastEdited: new Date(file.stat.mtime).toISOString(),
-      cadence: fm.cadence != null ? String(fm.cadence) : null,
-      kind: "resource",
-      parentProject: parent,
-    });
+    if (fm.type === "project") { projects.push(baseNode(file, fm, "project")); continue; }
+    if (fm.type === "area") areas.push(baseNode(file, fm, "area"));
+    if (fm.type === "resource" || unlink(fm.project) != null) {
+      resources.push(baseNode(file, fm, "resource"));
+    }
   }
 
-  out.sort((a, b) => (a.created ?? "").localeCompare(b.created ?? ""));
-  return out;
-}
-
-/** Collect `type: area` notes — the trunk header nodes (incl. empty areas). */
-export function collectAreas(app: App): ProjectNode[] {
-  const out: ProjectNode[] = [];
-  for (const file of app.vault.getMarkdownFiles()) {
-    if (SKIP_PREFIXES.some((p) => file.path.startsWith(p))) continue;
-    const fm = app.metadataCache.getFileCache(file)?.frontmatter;
-    if (!fm || fm.type !== "area") continue;
-    out.push({
-      title: file.basename,
-      path: file.path,
-      area: file.basename,
-      status: "area",
-      created: fm.created != null ? String(fm.created) : null,
-      branchedFrom: null,
-      contributesTo: [],
-      promotedTo: null,
-      goal: fm.goal != null ? String(fm.goal) : null,
-      nextAction: fm["next-action"] != null ? String(fm["next-action"]) : null,
-      lastEdited: new Date(file.stat.mtime).toISOString(),
-      cadence: fm.cadence != null ? String(fm.cadence) : null,
-      kind: "area",
-      parentProject: null,
-    });
-  }
-  return out;
+  projects.sort(byCreated);
+  resources.sort(byCreated);
+  return { projects, resources, areas };
 }
 
 /**

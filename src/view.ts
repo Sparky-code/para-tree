@@ -1,6 +1,6 @@
 import { ItemView, Platform, WorkspaceLeaf } from "obsidian";
 import type ParaTreePlugin from "./main";
-import { collectProjects, collectResources, collectAreas, ProjectNode } from "./data";
+import { collectNodes, ProjectNode, VaultNodes } from "./data";
 import { renderLineage } from "./render";
 import { buildAreaColors, orderedAreas, statusColor, relTime, isOverdue } from "./layout";
 
@@ -37,6 +37,7 @@ export class LineageView extends ItemView {
   laneMode: "packed" | "spread" = "packed"; // graph lane spacing
   hiddenKinds: Set<"area" | "project" | "resource"> = new Set(); // type filter
   search = ""; // jump-to-node query (filters the sidebar into a matches list)
+  private nodeCache: VaultNodes | null = null; // vault scan, reused until metadata changes
 
   constructor(leaf: WorkspaceLeaf, plugin: ParaTreePlugin) {
     super(leaf);
@@ -47,8 +48,20 @@ export class LineageView extends ItemView {
   getDisplayText(): string { return "Para-tree"; }
   getIcon(): string { return "workflow"; }
 
-  async onOpen() { this.draw(); }
+  async onOpen() { this.refresh(); }
   async onClose() { this.contentEl.empty(); }
+
+  /** Vault data, scanned once and cached. Selection/toggle/resize redraws reuse it;
+   *  only `refresh()` (on a metadata change) re-scans. */
+  private collect(): VaultNodes {
+    return (this.nodeCache ??= collectNodes(this.app));
+  }
+
+  /** Drop the cached vault scan and repaint — call when the vault's notes change. */
+  refresh() {
+    this.nodeCache = null;
+    this.draw();
+  }
 
   draw() {
     const root = this.contentEl;
@@ -56,9 +69,7 @@ export class LineageView extends ItemView {
     root.addClass("plm-container");
     root.toggleClass("plm-mobile", Platform.isMobile);
 
-    const projects = collectProjects(this.app);
-    const resources = collectResources(this.app);
-    const areaNodes = collectAreas(this.app);
+    const { projects, resources, areas: areaNodes } = this.collect();
     const areas = orderedAreas(projects, areaNodes);
     const areaColors = buildAreaColors(areas);
 
@@ -249,9 +260,8 @@ export class LineageView extends ItemView {
   private refreshSidebarList() {
     const list = this.contentEl.querySelector<HTMLElement>(".plm-side-list");
     if (!list) return;
-    const projects = collectProjects(this.app);
-    const resources = collectResources(this.app);
-    const areas = orderedAreas(projects, collectAreas(this.app));
+    const { projects, resources, areas: areaNodes } = this.collect();
+    const areas = orderedAreas(projects, areaNodes);
     list.empty();
     this.renderSidebarList(list, projects, resources, areas, buildAreaColors(areas));
   }

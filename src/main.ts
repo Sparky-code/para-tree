@@ -18,9 +18,13 @@ export default class ParaTreePlugin extends Plugin {
       callback: () => void this.activateView(),
     });
 
-    // Re-draw the open view when project metadata changes.
+    // Re-scan + re-draw the open view when vault notes change (frontmatter edits,
+    // new notes) or are deleted. Other redraws (selection, resize) reuse the cache.
     this.registerEvent(
       this.app.metadataCache.on("changed", () => this.refreshOpenViews()),
+    );
+    this.registerEvent(
+      this.app.metadataCache.on("deleted", () => this.refreshOpenViews()),
     );
   }
 
@@ -30,7 +34,7 @@ export default class ParaTreePlugin extends Plugin {
   refreshOpenViews() {
     for (const leaf of this.app.workspace.getLeavesOfType(VIEW_TYPE_LINEAGE)) {
       const view = leaf.view;
-      if (view instanceof LineageView) view.draw();
+      if (view instanceof LineageView) view.refresh();
     }
   }
 
