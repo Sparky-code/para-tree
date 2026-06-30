@@ -232,6 +232,7 @@
   cursor: pointer;
 }
 .plm-row-label:hover { fill: var(--text-accent); text-decoration: underline; }
+.plm-row-label.is-area { font-weight: 700; }
 .plm-toggle { fill: var(--text-muted); font: 600 11px -apple-system, Helvetica, Arial; user-select: none; cursor: pointer; }
 .plm-toggle-bg { fill: var(--background-modifier-hover); cursor: pointer; }
 .plm-toggle-bg:hover { fill: var(--background-modifier-border); }
@@ -252,6 +253,8 @@
 
 /* ---- full-row hover (band sits behind the spines) ---- */
 .plm-row-hl { fill: transparent; pointer-events: none; }
+.plm-row-hl.is-hover { fill: var(--background-modifier-hover); }
+body.plm-col-resizing { cursor: col-resize; }
 .plm-row-hit { fill: transparent; pointer-events: all; cursor: pointer; }
 .plm-ago { fill: var(--text-faint); font: 10px -apple-system, Helvetica, Arial; }
 .plm-pill-bg { fill: var(--background-modifier-hover); }

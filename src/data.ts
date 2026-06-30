@@ -20,7 +20,7 @@ export interface ProjectNode {
 /** Strip an Obsidian wikilink `[[Name|alias]]` down to `Name`; pass plain strings through. */
 function unlink(value: unknown): string | null {
   if (value == null) return null;
-  const raw = Array.isArray(value) ? value[0] : value;
+  const raw: unknown = Array.isArray(value) ? (value[0] as unknown) : value;
   if (typeof raw !== "string") return null;
   const m = raw.match(/\[\[([^\]|]+)(?:\|[^\]]+)?\]\]/);
   return (m ? m[1] : raw).trim() || null;

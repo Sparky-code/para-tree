@@ -9,12 +9,12 @@ export const VIEW_TYPE_LINEAGE = "para-tree";
 /** A small defined glyph: three vertical bars, tight (packed) or spaced (spread). */
 function laneGlyph(parent: HTMLElement, spread: boolean): void {
   const ns = "http://www.w3.org/2000/svg";
-  const svg = document.createElementNS(ns, "svg");
+  const svg = activeDocument.createElementNS(ns, "svg");
   svg.setAttribute("viewBox", "0 0 14 14");
   svg.setAttribute("width", "14");
   svg.setAttribute("height", "14");
   for (const x of spread ? [2.5, 7, 11.5] : [4.5, 7, 9.5]) {
-    const line = document.createElementNS(ns, "line");
+    const line = activeDocument.createElementNS(ns, "line");
     line.setAttribute("x1", String(x));
     line.setAttribute("y1", "2.5");
     line.setAttribute("x2", String(x));
@@ -44,7 +44,7 @@ export class LineageView extends ItemView {
   }
 
   getViewType(): string { return VIEW_TYPE_LINEAGE; }
-  getDisplayText(): string { return "PARA-Tree"; }
+  getDisplayText(): string { return "Para-tree"; }
   getIcon(): string { return "workflow"; }
 
   async onOpen() { this.draw(); }
@@ -123,7 +123,7 @@ export class LineageView extends ItemView {
       resources,
       areaNodes,
       {
-        onOpen: (path) => this.app.workspace.openLinkText(path, "", false),
+        onOpen: (path) => { void this.app.workspace.openLinkText(path, "", false); },
         onFocus: (title) => this.selectNode(title),
         onFocusArea: (area) => this.selectArea(area),
         onToggle: (title) => {
@@ -161,24 +161,24 @@ export class LineageView extends ItemView {
       const startW = which === "sidebar" ? this.sidebarW : this.inspectorW;
       const min = which === "sidebar" ? 140 : 220;
       const max = which === "sidebar" ? 420 : 520;
-      document.body.style.cursor = "col-resize";
+      activeDocument.body.classList.add("plm-col-resizing");
       let raf = 0;
       const onMove = (ev: MouseEvent) => {
         const delta = which === "sidebar" ? ev.clientX - startX : startX - ev.clientX;
         const w = Math.max(min, Math.min(max, startW + delta));
         if (which === "sidebar") this.sidebarW = w; else this.inspectorW = w;
         // Live, rAF-throttled redraw so the toolbar + timestamps track the moving edge.
-        if (!raf) raf = requestAnimationFrame(() => { raf = 0; this.draw(); });
+        if (!raf) raf = window.requestAnimationFrame(() => { raf = 0; this.draw(); });
       };
       const onUp = () => {
-        document.removeEventListener("mousemove", onMove);
-        document.removeEventListener("mouseup", onUp);
-        document.body.style.cursor = "";
-        if (raf) cancelAnimationFrame(raf);
+        activeDocument.removeEventListener("mousemove", onMove);
+        activeDocument.removeEventListener("mouseup", onUp);
+        activeDocument.body.classList.remove("plm-col-resizing");
+        if (raf) window.cancelAnimationFrame(raf);
         this.draw();
       };
-      document.addEventListener("mousemove", onMove);
-      document.addEventListener("mouseup", onUp);
+      activeDocument.addEventListener("mousemove", onMove);
+      activeDocument.addEventListener("mouseup", onUp);
     });
   }
 
@@ -247,7 +247,7 @@ export class LineageView extends ItemView {
 
   /** Re-render only the list under the search box (keeps the input focused while typing). */
   private refreshSidebarList() {
-    const list = this.contentEl.querySelector(".plm-side-list") as HTMLElement | null;
+    const list = this.contentEl.querySelector<HTMLElement>(".plm-side-list");
     if (!list) return;
     const projects = collectProjects(this.app);
     const resources = collectResources(this.app);

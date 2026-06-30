@@ -8,13 +8,13 @@ export default class ParaTreePlugin extends Plugin {
       (leaf) => new LineageView(leaf, this),
     );
 
-    this.addRibbonIcon("workflow", "PARA-Tree", () => {
+    this.addRibbonIcon("workflow", "Para-tree", () => {
       void this.activateView();
     });
 
     this.addCommand({
       id: "open",
-      name: "Open PARA-Tree",
+      name: "Open",
       callback: () => void this.activateView(),
     });
 
@@ -41,6 +41,6 @@ export default class ParaTreePlugin extends Plugin {
       leaf = workspace.getLeaf("tab");
       await leaf.setViewState({ type: VIEW_TYPE_LINEAGE, active: true });
     }
-    workspace.revealLeaf(leaf);
+    await workspace.revealLeaf(leaf);
   }
 }

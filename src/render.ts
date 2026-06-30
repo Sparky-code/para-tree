@@ -1,7 +1,7 @@
 import { ProjectNode, neighborhood } from "./data";
 import { layout, LayoutResult, DOT_R, FOCUS_DOT_R, ROW_H, relTime, isOverdue } from "./layout";
 
-const NS = "http://www.w3.org/2000/svg";
+const NS = "http://www.w3.org/2000/svg" as const;
 const DIM = 0.13; // opacity for elements outside the focused neighborhood
 
 export interface RenderHandlers {
@@ -21,8 +21,12 @@ export interface RenderOptions {
   activeArea?: string | null;           // RFC B: popped-out area
 }
 
-function svg(tag: string, attrs: Record<string, string | number> = {}, parent?: Element): any {
-  const e = document.createElementNS(NS, tag);
+function svg<K extends keyof SVGElementTagNameMap>(
+  tag: K,
+  attrs: Record<string, string | number> = {},
+  parent?: Element,
+): SVGElementTagNameMap[K] {
+  const e = activeDocument.createElementNS(NS, tag);
   for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, String(v));
   if (parent) parent.appendChild(e);
   return e;
@@ -178,10 +182,10 @@ export function renderLineage(
     const op = dim ? DIM : 1;
 
     // Full-row highlight band (drawn behind the spines) + hit target. Toggle the
-    // fill via inline style — a CSS `fill` rule would override setAttribute.
+    // fill via a CSS class (`.plm-row-hl.is-hover`) so themes can override it.
     const band = svg("rect", { class: "plm-row-hl", x: 0, y: n.y - ROW_H / 2, width: fillW, height: ROW_H }, bandsG);
-    const enter = () => { band.style.fill = "var(--background-modifier-hover)"; };
-    const leave = () => { band.style.fill = ""; };
+    const enter = () => band.classList.add("is-hover");
+    const leave = () => band.classList.remove("is-hover");
     const hit = svg("rect", { class: "plm-row-hit", x: 0, y: n.y - ROW_H / 2, width: fillW, height: ROW_H }, hitG);
     hit.addEventListener("mouseenter", enter);
     hit.addEventListener("mouseleave", leave);
@@ -237,7 +241,7 @@ export function renderLineage(
     const maxChars = Math.max(4, Math.floor(((showAge ? fillW - AGE_W : fillW - 8) - labelX - pillsW) / 6.6));
     const label = svg("text", { class: "plm-row-label", x: labelX, y: n.y + 4 }, g);
     label.textContent = `${isFocus ? "▶ " : ""}${truncate(n.project.title, maxChars)}`;
-    if (isArea) label.style.fontWeight = "700";
+    if (isArea) label.classList.add("is-area");
     if (n.project.path) label.addEventListener("click", () => handlers.onOpen(n.project.path));
 
     // Pills after the title: type (resources only) + status. Measure each to size it.
