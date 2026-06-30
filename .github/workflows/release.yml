@@ -1,0 +1,43 @@
+name: Release Obsidian plugin
+
+# Cut a release whenever a version tag (e.g. 1.0.0) is pushed. Obsidian requires
+# the tag to equal `version` in manifest.json — no leading "v".
+on:
+  push:
+    tags:
+      - "*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Create or refresh release with plugin assets
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            # Release already exists (e.g. you cut it by hand) — just (re)upload the
+            # build assets, leaving your release notes untouched.
+            gh release upload "$TAG" main.js manifest.json styles.css --clobber
+          else
+            gh release create "$TAG" \
+              --title "$TAG" \
+              --notes "PARA-Tree $TAG" \
+              main.js manifest.json styles.css
+          fi
